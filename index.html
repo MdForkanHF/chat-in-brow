@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SecretChat 🔐</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --surface2: #1e2230;
+      --border: #2a2f42;
+      --accent: #5b8cff;
+      --accent2: #a78bfa;
+      --sent: #5b8cff;
+      --received: #1e2230;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --danger: #f87171;
+      --success: #34d399;
+      --glow: rgba(91,140,255,0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: -20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(91,140,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== SCREENS ===== */
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    .screen.active { display: flex; }
+
+    /* ===== LOGIN SCREEN ===== */
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 0 60px rgba(91,140,255,0.08), 0 20px 60px rgba(0,0,0,0.4);
+      animation: cardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px rgba(91,140,255,0.3);
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-title {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .login-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+      font-weight: 300;
+    }
+
+    .field-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,140,255,0.12);
+    }
+
+    input.mono {
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.15em;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      box-shadow: 0 4px 20px rgba(91,140,255,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(91,140,255,0.45);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    /* config notice */
+    .config-notice {
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #fca5a5;
+      display: none;
+    }
+    .config-notice.show { display: block; }
+    .config-notice strong { color: var(--danger); }
+
+    /* ===== CHAT SCREEN ===== */
+    .chat-wrapper {
+      width: 100%;
+      max-width: 680px;
+      height: 100vh;
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      flex-shrink: 0;
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .chat-partner-info { line-height: 1.3; }
+
+    .chat-partner-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .chat-status {
+      font-size: 12px;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .room-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 20px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .leave-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Sora', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .leave-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Messages area */
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+
+    .messages-area::-webkit-scrollbar { width: 4px; }
+    .messages-area::-webkit-scrollbar-track { background: transparent; }
+    .messages-area::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* Message bubble */
+    .msg-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 72%;
+      animation: msgIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .msg-wrapper.sent { align-self: flex-end; align-items: flex-end; }
+    .msg-wrapper.received { align-self: flex-start; align-items: flex-start; }
+
+    .msg-bubble {
+      padding: 11px 16px;
+      border-radius: 18px;
+      font-size: 14.5px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .msg-wrapper.sent .msg-bubble {
+      background: linear-gradient(135deg, var(--accent), #4070ef);
+      color: white;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 12px rgba(91,140,255,0.25);
+    }
+
+    .msg-wrapper.received .msg-bubble {
+      background: var(--surface2);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .msg-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .msg-sender { font-weight: 600; }
+
+    /* Date divider */
+    .date-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      margin: 12px 0;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .date-divider::before, .date-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty-state .icon { font-size: 48px; opacity: 0.5; }
+    .empty-state p { font-size: 14px; }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: none;
+      padding: 0 24px 8px;
+      font-size: 12px;
+      color: var(--muted);
+      height: 28px;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .typing-indicator.show { display: flex; }
+
+    .typing-dots {
+      display: flex;
+      gap: 3px;
+    }
+
+    .typing-dots span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--muted);
+      animation: typingDot 1.2s infinite;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 16px 24px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .msg-input-wrapper {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .msg-input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,140,255,0.08);
+    }
+
+    #msgInput {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 14.5px;
+      font-family: 'Sora', sans-serif;
+      outline: none;
+      resize: none;
+      max-height: 100px;
+      line-height: 1.5;
+    }
+
+    #msgInput::placeholder { color: var(--muted); }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(91,140,255,0.3);
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(91,140,255,0.45); }
+    .send-btn:active { transform: scale(0.95); }
+
+    .send-btn svg { width: 18px; height: 18px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Setup modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #a5b4fc;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.7;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btns .btn { margin-top: 0; }
+
+    @media (max-width: 600px) {
+      .login-card { padding: 32px 24px; border-radius: 0; max-width: 100%; height: 100vh; justify-content: center; display: flex; flex-direction: column; }
+      .chat-wrapper { max-width: 100%; }
+      .msg-wrapper { max-width: 85%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div class="screen active" id="loginScreen">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-icon">🔐</div>
+      <span class="logo-text">SecretChat</span>
+    </div>
+
+    <div class="config-notice" id="configNotice">
+      <strong>⚠️ Firebase সেটআপ বাকি!</strong><br>
+      নিচের কোডে আপনার Firebase config বসান। এখন Demo mode-এ আছেন।
+      <br><br>
+      <span style="color:var(--muted)">Demo mode-এ শুধু একই ব্রাউজারে দেখা যাবে।</span>
+    </div>
+
+    <h1 class="login-title">স্বাগতম 👋</h1>
+    <p class="login-subtitle">Room code দিয়ে গোপন চ্যাটে ঢুকুন</p>
+
+    <div class="field-group">
+      <label>আপনার নাম</label>
+      <input type="text" id="nameInput" placeholder="যেমন: Rahim" maxlength="20"/>
+    </div>
+
+    <div class="field-group">
+      <label>Room Code</label>
+      <input type="text" id="roomInput" class="mono" placeholder="XXXX" maxlength="10"/>
+    </div>
+
+    <button class="btn btn-primary" onclick="joinRoom()">চ্যাটে ঢুকুন →</button>
+
+    <div class="divider">অথবা</div>
+
+    <button class="btn btn-secondary" onclick="createRoom()">নতুন Room তৈরি করুন</button>
+
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ===== CHAT SCREEN ===== -->
+<div class="screen" id="chatScreen">
+  <div class="chat-wrapper">
+
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="avatar" id="partnerAvatar">?</div>
+        <div class="chat-partner-info">
+          <div class="chat-partner-name" id="partnerName">অপেক্ষা করছি...</div>
+          <div class="chat-status">
+            <div class="status-dot"></div>
+            <span id="onlineStatus">Online</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="room-badge" id="roomBadge">ROOM</div>
+        <button class="leave-btn" onclick="leaveRoom()">বের হই</button>
+      </div>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">💬</div>
+        <p>Room code শেয়ার করুন,<br>অপরজন ঢুকলেই চ্যাট শুরু হবে!</p>
+      </div>
+    </div>
+
+    <div class="typing-indicator" id="typingIndicator">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span id="typingText">লিখছে...</span>
+    </div>
+
+    <div class="input-area">
+      <div class="msg-input-wrapper">
+        <textarea id="msgInput" placeholder="মেসেজ লিখুন..." rows="1"
+          oninput="autoResize(this); handleTyping()"
+          onkeydown="handleKey(event)"></textarea>
+      </div>
+      <button class="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Setup Guide Modal -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal">
+    <h2>🔥 Firebase সেটআপ করুন</h2>
+    <p>
+      Real-time চ্যাটের জন্য Firebase লাগবে।<br>
+      <strong>console.firebase.google.com</strong> → নতুন project → Realtime Database চালু করুন।<br><br>
+      তারপর নিচের জায়গায় আপনার config বসান:
+    </p>
+    <div class="code-block">// index.html এর নিচে খুঁজুন:
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};</div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="closeSetupModal()">বুঝেছি, পরে করব</button>
+      <a href="https://console.firebase.google.com" target="_blank" style="flex:1">
+        <button class="btn btn-secondary" style="width:100%">Firebase খুলুন ↗</button>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== FIREBASE SDK ===== -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ============================================================
+//  🔥 এখানে আপনার Firebase Config বসান
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBffrnA1iJNqFtWUsOOuwLPcnh6k6wTPpo",
+  authDomain: "chat-in-brow.firebaseapp.com",
+  databaseURL: "https://chat-in-brow-default-rtdb.firebaseio.com",
+  projectId: "chat-in-brow",
+  storageBucket: "chat-in-brow.firebasestorage.app",
+  messagingSenderId: "718904786913",
+  appId: "1:718904786913:web:6c7508d892e84162a89ca0"
+};
+// ============================================================
+
+// State
+let myName = '';
+let roomCode = '';
+let db = null;
+let isFirebaseReady = false;
+let typingTimeout = null;
+let lastDate = '';
+
+// ---- Init Firebase ----
+function initFirebase() {
+  try {
+    if (FIREBASE_CONFIG.apiKey === "YOUR_API_KEY") {
+      document.getElementById('configNotice').classList.add('show');
+      return false;
+    }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    isFirebaseReady = true;
+    return true;
+  } catch(e) {
+    console.warn('Firebase init failed:', e);
+    return false;
+  }
+}
+
+initFirebase();
+
+// ---- Room Functions ----
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function createRoom() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) { showError('আপনার নাম লিখুন'); return; }
+  const code = generateCode();
+  document.getElementById('roomInput').value = code;
+  showToast('Room Code: ' + code + ' — অপরজনকে দিন!');
+}
+
+function joinRoom() {
+  const name = document.getElementById('nameInput').value.trim();
+  const code = document.getElementById('roomInput').value.trim().toUpperCase();
+
+  if (!name) { showError('আপনার নাম লিখুন'); return; }
+  if (!code || code.length < 4) { showError('সঠিক Room Code লিখুন'); return; }
+
+  myName = name;
+  roomCode = code;
+  clearError();
+
+  if (isFirebaseReady) {
+    enterChatFirebase();
+  } else {
+    enterChatDemo();
+  }
+}
+
+// ---- FIREBASE MODE ----
+function enterChatFirebase() {
+  const roomRef = db.ref('rooms/' + roomCode);
+  const presenceRef = db.ref('rooms/' + roomCode + '/presence/' + myName);
+
+  // Set presence
+  presenceRef.set({ name: myName, online: true, joinedAt: Date.now() });
+  presenceRef.onDisconnect().remove();
+
+  // Watch presence
+  roomRef.child('presence').on('value', snap => {
+    const users = snap.val() || {};
+    const others = Object.keys(users).filter(u => u !== myName);
+    if (others.length > 0) {
+      const partner = others[0];
+      document.getElementById('partnerName').textContent = partner;
+      document.getElementById('partnerAvatar').textContent = partner[0].toUpperCase();
+    } else {
+      document.getElementById('partnerName').textContent = 'অপেক্ষা করছি...';
+      document.getElementById('partnerAvatar').textContent = '?';
+    }
+  });
+
+  // Watch messages
+  roomRef.child('messages').on('child_added', snap => {
+    const msg = snap.val();
+    appendMessage(msg);
+  });
+
+  // Watch typing
+  roomRef.child('typing').on('value', snap => {
+    const typing = snap.val() || {};
+    const others = Object.keys(typing).filter(u => u !== myName && typing[u]);
+    if (others.length > 0) {
+      document.getElementById('typingText').textContent = others[0] + ' লিখছে...';
+      document.getElementById('typingIndicator').classList.add('show');
+    } else {
+      document.getElementById('typingIndicator').classList.remove('show');
+    }
+  });
+
+  switchToChat();
+}
+
+function sendMessageFirebase(text) {
+  const msgRef = db.ref('rooms/' + roomCode + '/messages').push();
+  msgRef.set({
+    sender: myName,
+    text: text,
+    time: Date.now()
+  });
+  // clear typing
+  db.ref('rooms/' + roomCode + '/typing/' + myName).set(false);
+}
+
+function setTypingFirebase(isTyping) {
+  if (!isFirebaseReady) return;
+  db.ref('rooms/' + roomCode + '/typing/' + myName).set(isTyping);
+}
+
+// ---- DEMO MODE (same tab) ----
+const demoMessages = [];
+function enterChatDemo() {
+  document.getElementById('partnerName').textContent = 'Demo Partner';
+  document.getElementById('partnerAvatar').textContent = 'D';
+  switchToChat();
+  showToast('Demo mode: Firebase সেটআপ করলে real-time হবে!');
+}
+
+function sendMessageDemo(text) {
+  const msg = { sender: myName, text, time: Date.now() };
+  appendMessage(msg);
+}
+
+// ---- SHARED SEND ----
+function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (isFirebaseReady) {
+    sendMessageFirebase(text);
+  } else {
+    sendMessageDemo(text);
+  }
+
+  input.value = '';
+  input.style.height = 'auto';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function handleTyping() {
+  if (!isFirebaseReady) return;
+  setTypingFirebase(true);
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => setTypingFirebase(false), 2000);
+}
+
+// ---- UI ----
+function appendMessage(msg) {
+  const area = document.getElementById('messagesArea');
+  const empty = document.getElementById('emptyState');
+  if (empty) empty.remove();
+
+  const isSent = msg.sender === myName;
+  const date = new Date(msg.time);
+  const dateStr = date.toLocaleDateString('bn-BD', { day:'numeric', month:'long' });
+
+  if (dateStr !== lastDate) {
+    lastDate = dateStr;
+    const div = document.createElement('div');
+    div.className = 'date-divider';
+    div.textContent = dateStr;
+    area.appendChild(div);
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-wrapper ' + (isSent ? 'sent' : 'received');
+
+  const timeStr = date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+  wrapper.innerHTML = `
+    <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+    <div class="msg-meta">
+      ${!isSent ? `<span class="msg-sender">${escapeHtml(msg.sender)}</span> · ` : ''}
+      <span>${timeStr}</span>
+      ${isSent ? ' · ✓' : ''}
+    </div>
+  `;
+
+  area.appendChild(wrapper);
+  area.scrollTop = area.scrollHeight;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function switchToChat() {
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('chatScreen').classList.add('active');
+  document.getElementById('roomBadge').textContent = roomCode;
+  document.getElementById('msgInput').focus();
+}
+
+function leaveRoom() {
+  if (isFirebaseReady) {
+    db.ref('rooms/' + roomCode + '/presence/' + myName).remove();
+    db.ref('rooms/' + roomCode).off();
+  }
+  location.reload();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function showError(msg) {
+  document.getElementById('loginError').textContent = msg;
+}
+
+function clearError() {
+  document.getElementById('loginError').textContent = '';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function closeSetupModal() {
+  document.getElementById('setupModal').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
